@@ -10,6 +10,7 @@ from datetime import datetime
 import sys
 import os
 
+
 def load_shipstation_data(filepath):
     """
     Load ShipStation CSV export into a pandas DataFrame
@@ -49,11 +50,16 @@ def load_shipstation_data(filepath):
         df = df[df['item_sku'].notna() & (df['item_sku'] != '')]  # Remove missing/empty SKUs
         df = df[df['item_qty'].notna() & (df['item_qty'] > 0)]    # Remove missing or zero quantities
         
+        # Remove SKUs that are purely numeric and underscores
+        # This regex pattern matches strings that contain only digits and underscores
+        numeric_underscore_pattern = r'^[\d_]+$'
+        df = df[~df['item_sku'].str.match(numeric_underscore_pattern, na=False)]
+        
         filtered_count = original_count - len(df)
         
         print(f"Successfully loaded {len(df)} rows from {filepath}")
         if filtered_count > 0:
-            print(f"Filtered out {filtered_count} rows with missing SKU or zero/missing quantity")
+            print(f"Filtered out {filtered_count} rows with missing SKU, zero/missing quantity, or numeric-only SKUs")
         print(f"Date range: {df['order_date'].min()} to {df['order_date'].max()}")
         print(f"Number of unique SKUs: {df['item_sku'].nunique()}")
         print(f"Number of unique orders: {df['order_number'].nunique()}")
